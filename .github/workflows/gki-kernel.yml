@@ -179,16 +179,17 @@ jobs:
           $REPO --version
           $REPO --trace sync -c -j$(nproc --all) --no-tags --fail-fast
 
-          echo "Replace common with custom kernel..."
-          rm -rf common
-          git clone --depth=1 -b android12-5.10 https://github.com/ramabondanp/android_kernel_common-5.10.git common
-
+          echo "upstream"
+          git remote add rama https://github.com/ramabondanp/android_kernel_common-5.10.git
+          git fetch -j12 rama
+          git cherry-pick 2afc3cd 8f27b49
+          
       - name: Replace Clang with clang-r574158 (clang 21)
         run: |
           cd $GITHUB_WORKSPACE/$CONFIG/prebuilts-master/clang/host/linux-x86 
           echo "Remove old clang..."
           rm -rf clang-*
-
+          
           echo "Download clang 21 (clang-r574158)..."
           mkdir -p clang-r574158
           cd clang-r574158
@@ -197,6 +198,14 @@ jobs:
           echo "Extract clang 21..."
           tar -xvzf clang-r574158.tar.gz
           rm clang-r574158.tar.gz
+
+      - name: Fixed bootlop error module 
+        run: |
+          cd $GITHUB_WORKSPACE/$CONFIG/common
+          echo "🔧 Perbaikan source..."
+          sed -i '/pr_warn.*disagrees about version of symbol.*/,+1 s/.*/return 1;/' kernel/module.c
+          sed -i '/^static int drm_atomic_check_valid_clones/,/^}/d' drivers/gpu/drm/drm_atomic_helper.c
+          sed -i '/ret = drm_atomic_check_valid_clones/,/return ret;/d' drivers/gpu/drm/drm_atomic_helper.c
 
       - name: Update build.config.common for clang 21
         run: |
