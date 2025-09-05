@@ -179,10 +179,9 @@ jobs:
           $REPO --version
           $REPO --trace sync -c -j$(nproc --all) --no-tags --fail-fast
 
-          echo "upstream"
-          git remote add rama https://github.com/ramabondanp/android_kernel_common-5.10.git
-          git fetch -j12 rama
-          git cherry-pick 2afc3cd 8f27b49
+          echo "Replace common with custom kernel..."
+          rm -rf common
+          git clone --depth=1 -b android12-5.10 https://github.com/ramabondanp/android_kernel_common-5.10.git common
           
       - name: Replace Clang with clang-r574158 (clang 21)
         run: |
